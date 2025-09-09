@@ -93,9 +93,6 @@ class Ressources
         return $this;
     }
 
-    /**
-     * @return Collection<int, Tag>
-     */
     public function getTags(): Collection
     {
         return $this->tags;

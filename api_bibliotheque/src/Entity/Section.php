@@ -1,9 +1,13 @@
 <?php
 
+
 namespace App\Entity;
 
 use App\Repository\SectionRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Ressources;
 
 #[ORM\Entity(repositoryClass: SectionRepository::class)]
 class Section
@@ -20,6 +24,14 @@ class Section
     #[ORM\JoinColumn(nullable: false)]
     private ?Categorie $id_categorie = null;
 
+    #[ORM\OneToMany(mappedBy: 'id_section', targetEntity: Ressources::class)]
+    private Collection $ressources;
+
+    public function __construct()
+    {
+        $this->ressources = new ArrayCollection();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -33,7 +45,6 @@ class Section
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
@@ -45,7 +56,14 @@ class Section
     public function setIdCategorie(?Categorie $id_categorie): static
     {
         $this->id_categorie = $id_categorie;
-
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Ressources>
+     */
+    public function getRessources(): Collection
+    {
+        return $this->ressources;
     }
 }
