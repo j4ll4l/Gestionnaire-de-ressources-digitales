@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20250908130650 extends AbstractMigration
+final class Version20250909085824 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -25,6 +25,7 @@ final class Version20250908130650 extends AbstractMigration
         $this->addSql('CREATE TABLE ressources_tag (ressources_id INT NOT NULL, tag_id INT NOT NULL, INDEX IDX_BA6C6CF53C361826 (ressources_id), INDEX IDX_BA6C6CF5BAD26311 (tag_id), PRIMARY KEY(ressources_id, tag_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE section (id INT AUTO_INCREMENT NOT NULL, id_categorie_id INT NOT NULL, nom VARCHAR(255) NOT NULL, INDEX IDX_2D737AEF9F34925F (id_categorie_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE tag (id INT AUTO_INCREMENT NOT NULL, nom VARCHAR(255) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        $this->addSql('CREATE TABLE user (id INT AUTO_INCREMENT NOT NULL, username VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL, roles JSON NOT NULL, UNIQUE INDEX UNIQ_IDENTIFIER_USERNAME (username), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('ALTER TABLE ressources ADD CONSTRAINT FK_6A2CD5C77DA963AD FOREIGN KEY (id_section_id) REFERENCES section (id)');
         $this->addSql('ALTER TABLE ressources_tag ADD CONSTRAINT FK_BA6C6CF53C361826 FOREIGN KEY (ressources_id) REFERENCES ressources (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE ressources_tag ADD CONSTRAINT FK_BA6C6CF5BAD26311 FOREIGN KEY (tag_id) REFERENCES tag (id) ON DELETE CASCADE');
@@ -43,5 +44,6 @@ final class Version20250908130650 extends AbstractMigration
         $this->addSql('DROP TABLE ressources_tag');
         $this->addSql('DROP TABLE section');
         $this->addSql('DROP TABLE tag');
+        $this->addSql('DROP TABLE user');
     }
 }
