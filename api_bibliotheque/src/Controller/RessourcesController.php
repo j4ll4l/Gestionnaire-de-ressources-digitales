@@ -3,6 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Categorie;
+use App\Entity\Section;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -45,5 +48,40 @@ final class RessourcesController extends AbstractController
         }
 
         return $this->json($data);
+    }
+    #[Route('/api/ressource', name: 'ajouter_ressource', methods: ['POST'])]
+    public function ajouterRessource(
+        Request $request,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            return $this->json(['error' => 'Accès refusé'], Response::HTTP_FORBIDDEN);
+        }
+        $data = json_decode($request->getContent(), true);
+
+        if (
+            !isset($data['nom'], $data['url'], $data['description'], $data['section_id'])
+        ) {
+            return $this->json(['error' => 'Données incomplètes'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $section = $em->getRepository(Section::class)->find($data['section_id']);
+        if (!$section) {
+            return $this->json(['error' => 'Section non trouvée'], Response::HTTP_NOT_FOUND);
+        }
+
+        $ressource = new \App\Entity\Ressources();
+        $ressource->setNom($data['nom']);
+        $ressource->setUrl($data['url']);
+        $ressource->setDescription($data['description']);
+        $ressource->setIdSection($section);
+
+        $em->persist($ressource);
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Ressource ajoutée avec succès',
+            'id' => $ressource->getId()
+        ], Response::HTTP_CREATED);
     }
 }
