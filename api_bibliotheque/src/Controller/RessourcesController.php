@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Ressources;
 use App\Entity\Categorie;
 use App\Entity\Section;
+use App\Entity\Tag;
 use DateTime;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,11 +39,19 @@ final class RessourcesController extends AbstractController
 
                 // Récupérer chaque ressource de la section
                 foreach ($section->getRessources() as $ressource) {
+                    $tagsData = [];
+                    foreach ($ressource->getTags() as $tag) {
+                        $tagsData[] = [
+                            'id' => $tag->getId(),
+                            'nom' => $tag->getNom(),
+                        ];
+                    }
                     $ressourcesData[] = [
                         'id' => $ressource->getId(),
                         'nom' => $ressource->getNom(),
                         'url' => $ressource->getUrl(),
                         'description' => $ressource->getDescription(),
+                        'tags' => $tagsData,
                     ];
                 }
 
@@ -86,6 +95,7 @@ final class RessourcesController extends AbstractController
                     'nom' => $ressource->getNom(),
                     'url' => $ressource->getUrl(),
                     'description' => $ressource->getDescription(),
+
                 ];
             }
 
@@ -125,6 +135,19 @@ final class RessourcesController extends AbstractController
         $ressource->setDescription($data['description']);
         $ressource->setIdSection($section);
         $ressource->setPublishedAt(new DateTime);
+
+        // je crée le tag s’il n’existe pas
+        if (isset($data['tags']) && is_array($data['tags'])) {
+            foreach ($data['tags'] as $tagName) {
+                $tag = $em->getRepository(Tag::class)->findOneBy(['nom' => $tagName]);
+                if (!$tag) {
+                    $tag = new Tag();
+                    $tag->setNom($tagName);
+                    $em->persist($tag);
+                }
+                $ressource->addTag($tag);
+            }
+        }
 
         $em->persist($ressource);
         $em->flush();
@@ -188,6 +211,24 @@ final class RessourcesController extends AbstractController
             $section = $em->getRepository(Section::class)->find($data['section_id']);
             if ($section) {
                 $ressource->setIdSection($section);
+            }
+        }
+        // Mise à jour des tags
+        if (isset($data['tags']) && is_array($data['tags'])) {
+            //Suppression des  tags
+            foreach ($ressource->getTags() as $oldTag) {
+                $ressource->removeTag($oldTag);
+            }
+
+            // On ajoute les nouveaux
+            foreach ($data['tags'] as $tagName) {
+                $tag = $em->getRepository(\App\Entity\Tag::class)->findOneBy(['nom' => $tagName]);
+                if (!$tag) {
+                    $tag = new \App\Entity\Tag();
+                    $tag->setNom($tagName);
+                    $em->persist($tag);
+                }
+                $ressource->addTag($tag);
             }
         }
         $ressource->setPublishedAt(new DateTime);
