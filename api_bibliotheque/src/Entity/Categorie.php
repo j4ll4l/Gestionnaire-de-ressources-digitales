@@ -28,9 +28,16 @@ class Categorie
     #[ORM\OneToMany(targetEntity: Section::class, mappedBy: 'id_categorie', orphanRemoval: true)]
     private Collection $sections;
 
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column]
+    private ?\DateTime $publishedAt = null;
+
     public function __construct()
     {
         $this->sections = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -88,6 +95,30 @@ class Categorie
                 $section->setIdCategorie(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getPublishedAt(): ?\DateTimeImmutable
+    {
+        return $this->publishedAt;
+    }
+
+    public function setPublishedAt(\DateTime $publishedAt): static
+    {
+        $this->publishedAt = $publishedAt;
 
         return $this;
     }

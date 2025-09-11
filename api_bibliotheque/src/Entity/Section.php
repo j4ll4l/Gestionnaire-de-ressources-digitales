@@ -27,9 +27,16 @@ class Section
     #[ORM\OneToMany(mappedBy: 'id_section', targetEntity: Ressources::class)]
     private Collection $ressources;
 
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column]
+    private ?\DateTime $publishedAt = null;
+
     public function __construct()
     {
         $this->ressources = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -65,5 +72,29 @@ class Section
     public function getRessources(): Collection
     {
         return $this->ressources;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getPublishedAt(): ?\DateTime
+    {
+        return $this->publishedAt;
+    }
+
+    public function setPublishedAt(\DateTime $publishedAt): static
+    {
+        $this->publishedAt = $publishedAt;
+
+        return $this;
     }
 }
