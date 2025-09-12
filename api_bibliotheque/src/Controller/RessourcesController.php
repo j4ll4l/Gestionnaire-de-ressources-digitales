@@ -131,6 +131,11 @@ final class RessourcesController extends AbstractController
 
         $ressource = new Ressources();
         $ressource->setNom($data['nom']);
+        
+        $urlExist = $em->getRepository(Ressources::class)->findOneBy(['url' => $data['url']]);
+        if($urlExist){
+             return $this->json(['error' => "L'url existe dejà "], Response::HTTP_BAD_REQUEST);
+        }
         $ressource->setUrl($data['url']);
         $ressource->setDescription($data['description']);
         $ressource->setIdSection($section);
