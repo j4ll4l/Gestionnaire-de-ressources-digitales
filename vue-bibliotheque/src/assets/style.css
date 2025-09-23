@@ -1,0 +1,148 @@
+/* Reset et styles globaux */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background-color: #fdfdf8;
+  color: #333;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: auto;
+}
+
+button {
+  cursor: pointer;
+}
+
+.button  .admin-buttons .save {
+  background-color: #ff4500;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn {
+  background-color: #ff6b00;
+  border-radius: 5px;
+  padding: 0.5rem 1.5rem;
+  color: white;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+/* Special thanks to Kevin Powell : https://www.youtube.com/watch?v=5DEq5cWNYt8 */
+
+ :root {
+--footer-background-color: none;
+--link: #f15d57;
+--background-tiles: #c39f76;
+--background-hero: rgb(79, 79, 79);
+--title-hero: #fff;
+--subtitle-hero: #212121;
+--card-background: hsl(32, 39%, 61%);
+} 
+
+.footer a {
+  color: var(--link);
+}
+
+/* --= HEADER ==- */
+.tampon {
+  height: 50px;
+  float: right;
+}
+
+
+.asterix {
+  width: 35%;
+  padding: 1rem 0 1rem 0;
+}
+
+/* --= FOOTER ==- */
+.footer {
+  background-color: var(--footer-background-color);
+  font-size: 0.8rem;
+}
+
+.mention {
+  font-size: 0.7rem;
+}
+
+/* Source Material : https://web.dev/prefers-reduced-motion/ */
+/* @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
+
+@media (hover) {
+  .card-content {
+    transform: translateY(69%);
+    transition: transform 500ms ease;
+  }
+
+  .card:hover .card-content,
+  .card:focus-within .card-content {
+  transform: translateY(0);
+  transition-delay: 500ms;
+  }
+
+  .card:focus-within .card-content {
+    transition-duration: 0ms;
+  }
+
+  .card-content > *:not(.card-title) {
+    opacity: 0;
+    transition: opacity 500ms linear;
+  }
+
+  .card:hover .card-content > *:not(.card-title),
+  .card:focus-within .card-content > *:not(.card-title) {
+    opacity: 1;
+    transition-delay: 800ms;
+  }
+
+  .card-title::after {
+    transform: scaleX(0);
+  }
+} */
+
+
+
+
+.header {
+  background-color: #595856;
+  color: white;
+  padding: 1rem 3rem;
+  font-size: large;
+}
