@@ -1,3 +1,119 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { useUser } from '@/components/shared/stores/userStore'
+import { useRouter } from 'vue-router'
+import {
+  getAdminCategories,
+  addCategorie,
+  addSection,
+} from '@/components/shared/services/admin.service'
+import axios from 'axios'
+import type { Categorie, Ressource } from '@/components/shared/interfaces/Categorie.interface'
+
+const store = useUser()
+const router = useRouter()
+
+function handleLogout() {
+  store.logout()
+  router.push({ name: 'categories' })
+}
+
+const categories = ref<Categorie[]>([])
+const selectedCategorie = ref<number>()
+const loading = ref(true)
+const error = ref<string | null>(null)
+
+const selectedSectionCategorie = ref<number | null>(null)
+const newSectionNom = ref('')
+
+// nouveaux champs
+const newCategorieNom = ref('')
+const newCategorieDescription = ref('')
+
+// charger les catégories
+onMounted(async () => {
+  categories.value = await getAdminCategories()
+})
+
+// ajouter une catégorie
+const ajouterNouvelleCategorie = async () => {
+  if (!newCategorieNom.value.trim()) return
+
+  const nouvelleCategorie = await addCategorie({
+    nom: newCategorieNom.value,
+    description: newCategorieDescription.value,
+  })
+
+  categories.value.push(nouvelleCategorie) // on met à jour la liste
+  selectedCategorie.value = nouvelleCategorie.id // on sélectionne la nouvelle
+  newCategorieNom.value = ''
+  newCategorieDescription.value = ''
+}
+
+// Pour le formulaire
+const editingRessource = ref<Ressource | null>(null)
+
+onMounted(async () => {
+  await loadCategories()
+})
+
+async function loadCategories() {
+  loading.value = true
+  try {
+    categories.value = await getAdminCategories()
+  } catch (e: any) {
+    error.value = e.message || 'Erreur lors du chargement des ressources'
+  } finally {
+    loading.value = false
+  }
+}
+
+const allRessources = computed(() =>
+  categories.value.flatMap((categorie) =>
+    (categorie.sections ?? []).flatMap((section) =>
+      (section.ressources ?? []).map((ressource) => ({
+        ...ressource,
+        categorieNom: categorie.nom,
+        sectionNom: section.nom,
+      })),
+    ),
+  ),
+)
+
+const selectedSection = ref<number | null>(null) // section sélectionnée
+// nouvelle section
+
+// sections filtrées selon la catégorie sélectionnée
+const sectionsFiltrees = computed(() => {
+  if (!selectedCategorie.value) return []
+  const categorie = categories.value.find((c) => c.id === selectedCategorie.value)
+  return categorie?.sections || []
+})
+
+// ajouter une nouvelle section
+const ajouterNouvelleSection = async () => {
+  if (!newSectionNom.value.trim() || !selectedCategorie.value) return
+
+  try {
+    const nouvelleSection = await addSection({
+      nom: newSectionNom.value,
+      categorie_id: selectedCategorie.value,
+    })
+
+    // Mise à jour de la catégorie dans le state
+    const categorie = categories.value.find((c) => c.id === selectedCategorie.value)
+    if (categorie) {
+      if (!categorie.sections) categorie.sections = []
+      categorie.sections.push(nouvelleSection)
+    }
+
+    newSectionNom.value = ''
+  } catch (err) {
+    console.error("Erreur lors de l'ajout de la section", err)
+  }
+}
+</script>
+
 <template>
   <div>
     <!-- HEADER -->
@@ -5,6 +121,7 @@
       <div class="admin-container">
         <h1>⚙️ Administration — Ressources</h1>
         <div class="admin-backoffice">📚 <RouterLink to="/">Back-office</RouterLink></div>
+        <button class="btn" @click="handleLogout">Logout</button>
       </div>
     </header>
 
@@ -18,37 +135,46 @@
           <h3>Ajouter / Modifier une ressource</h3>
 
           <label>Nom de la ressource</label>
-          <input type="text" placeholder="Ex. My Brand New Logo">
+          <input type="text" placeholder="Ex. My Brand New Logo" />
 
           <label>URL</label>
-          <input type="url" placeholder="https://exemple.com/ressource">
+          <input type="url" placeholder="https://exemple.com/ressource" />
 
-          <label>Catégorie</label>
-          <select>
-            <option value="">Sélectionner une catégorie</option>
-            <option value="Développement">Développement</option>
-            <option value="Design">Design</option>
-            <option value="Marketing">Marketing</option>
-          </select>
-          <div class="admin-category-new">
-            <input type="text" placeholder="Nouvelle catégorie">
-            <button type="button" class="add-btn">+ Ajouter</button>
-          </div>
+          <section class="admin-form">
+            <h3>Ajouter / Modifier une catégorie</h3>
 
-          <label>Section</label>
-          <select>
-            <option value="">Sélectionner une section</option>
-            <option value="Développement">Développement</option>
-            <option value="Design">Design</option>
-            <option value="Marketing">Marketing</option>
-          </select>
-          <div class="admin-category-new">
-            <input type="text" placeholder="Nouvelle section">
-            <button type="button" class="add-btn">+ Ajouter</button>
-          </div>
+            <label>Catégorie</label>
+            <select v-model="selectedCategorie">
+              <option :value="null">Sélectionner une catégorie</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.nom }}</option>
+            </select>
+
+            <div class="admin-category-new">
+              <input v-model="newCategorieNom" placeholder="Nouvelle catégorie" />
+              <input v-model="newCategorieDescription" placeholder="Description" />
+              <button type="button" class="add-btn" @click="ajouterNouvelleCategorie">
+                + Ajouter
+              </button>
+            </div>
+
+            <label>Section</label>
+            <select v-model="selectedSection">
+              <option :value="null">Sélectionner une section</option>
+              <option v-for="section in sectionsFiltrees" :key="section.id" :value="section.id">
+                {{ section.nom }}
+              </option>
+            </select>
+
+            <div class="admin-category-new">
+              <input v-model="newSectionNom" placeholder="Nouvelle section" />
+              <button type="button" class="add-btn" @click="ajouterNouvelleSection">
+                + Ajouter
+              </button>
+            </div>
+          </section>
 
           <label>Tags</label>
-          <input type="text" placeholder="Ajouter des tags">
+          <input type="text" placeholder="Ajouter des tags" />
 
           <label>Description</label>
           <textarea placeholder="Description de la ressource..."></textarea>
@@ -71,41 +197,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>My Brand New Logo</td>
-                <td>Design</td>
-                <td>exemple.com/logo</td>
-                <td><span>#icônes</span></td>
+              <tr v-for="ressource in allRessources" :key="ressource.id">
+                <td>{{ ressource.nom }}</td>
+                <td>{{ ressource.categorieNom }}</td>
+                <td>{{ ressource.url }}</td>
                 <td>
-                  <div class="buttons-edit">
-                    <button class="edit">✏️</button>
-                    <button class="delete">🗑️</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>Hébergement gratuit starter</td>
-                <td>Développement</td>
-                <td>starter.host/app</td>
-                <td>
-                  <span>#hébergement</span>
-                  <span>#gratuit</span>
-                  <span>#déploiement</span>
-                </td>
-                <td>
-                  <div class="buttons-edit">
-                    <button class="edit">✏️</button>
-                    <button class="delete">🗑️</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>Guide SEO rapide</td>
-                <td>Marketing</td>
-                <td>seo.guide/rapide</td>
-                <td>
-                  <span>#seo</span>
-                  <span>#référencement</span>
+                  <span v-for="tag in ressource.tags" :key="tag.id">#{{ tag.nom }}</span>
                 </td>
                 <td>
                   <div class="buttons-edit">
@@ -120,30 +217,28 @@
       </div>
     </main>
   </div>
-          <!--FOOTER-->
-        <footer class="footer">
-            <div class="content has-text-centered">
-                <p>
-                    <a href="http://www.e-potion.fr/"><strong>e-Potion</strong></a> by <a
-                        href="https://www.linkedin.com/in/christianbourgeoisdev" target="_blank">Christian Bourgeois</a>
-                    <br />
-                    Tous droits réservés - <strong>
-                        <!-- <script>document.write(new Date().getFullYear())</script> -->
-                    </strong>
-                </p>
-                <p class="mention">
-                    made with <a href="https://bulma.io/">Bulma</a>
-                </p>
-            </div>
-        </footer>
+  <!--FOOTER-->
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p>
+        <a href="http://www.e-potion.fr/"><strong>e-Potion</strong></a> by
+        <a href="https://www.linkedin.com/in/christianbourgeoisdev" target="_blank"
+          >Christian Bourgeois</a
+        >
+        <br />
+        Tous droits réservés -
+        <strong>
+          <!-- <script>document.write(new Date().getFullYear())</script> -->
+        </strong>
+      </p>
+      <p class="mention">made with <a href="https://bulma.io/">Bulma</a></p>
+    </div>
+  </footer>
 </template>
 
-<script setup>
-</script>
+<script setup></script>
 
 <style scoped>
-
-
 /* .admin-container {
   margin: auto;
   display: flex;
@@ -254,7 +349,7 @@
 .admin-main {
   /* width: 90%; */
   max-width: 1200px;
-  margin: 30px auto ;
+  margin: 30px auto;
 }
 
 .admin-main h2 {
@@ -273,7 +368,7 @@
   background-color: #fff;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -285,8 +380,7 @@
 
 .admin-form input,
 .admin-form textarea,
-.admin-form select 
-{
+.admin-form select {
   padding: 10px;
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -298,21 +392,23 @@
   min-height: 80px;
 }
 
-.admin-categories, .admin-tags {
+.admin-categories,
+.admin-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.admin-categories span, .admin-tags span {
+.admin-categories span,
+.admin-tags span {
   background-color: #333;
   color: white;
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 0.8rem;
 }
-.admin-form textarea{
-    resize: none;
+.admin-form textarea {
+  resize: none;
 }
 
 .admin-buttons {
@@ -344,7 +440,7 @@
   background-color: #fff;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
 }
 
 /* .admin-searchbar {
@@ -382,7 +478,8 @@
   margin-bottom: 15px;
 }
 
-.admin-table th, .admin-table td {
+.admin-table th,
+.admin-table td {
   text-align: left;
   padding: 12px;
   border-bottom: 1px solid #eee;
@@ -397,9 +494,9 @@
   font-size: 0.8rem;
   margin-right: 5px;
 }
-.buttons-edit{
-    display: flex;
-    flex-wrap: nowrap;
+.buttons-edit {
+  display: flex;
+  flex-wrap: nowrap;
 }
 /* -------- Nouvelle catégorie -------- */
 .admin-category-new {
@@ -439,7 +536,6 @@
   background: #f5f5f5;
 }
 
-
 /* Actions */
 .admin-table .edit {
   background-color: #f1f1f1;
@@ -471,6 +567,4 @@
   padding: 10px;
   text-align: center;
 }
-
 </style>
- 

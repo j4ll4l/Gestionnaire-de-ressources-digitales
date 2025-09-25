@@ -16,6 +16,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/admin',
     name: 'admin',
     component: () => import('@/components/layout/Admin.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/login',

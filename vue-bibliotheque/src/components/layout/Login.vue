@@ -1,3 +1,43 @@
+<script setup lang="ts">
+import { z } from 'zod';
+import { toTypedSchema } from '@vee-validate/zod';
+import { useField, useForm } from 'vee-validate';
+import type { LoginForm } from '@/components/shared/interfaces/User.interface';
+import {  useUser } from '@/components/shared/stores/userStore'; 
+import { useRouter } from 'vue-router';
+
+const store = useUser(); 
+const router = useRouter();
+
+if (store.isAuthenticated) {
+  router.push({ name: "dashboard" });
+}
+
+const validationSchema = toTypedSchema(
+  z.object({
+    username: z.string().nonempty("Champ incorrect"),
+    password: z.string().nonempty("Champ incorrect")
+  })
+);
+
+const { handleSubmit } = useForm({ validationSchema });
+
+const submit = handleSubmit(async (formValue: LoginForm) => {
+  await store.login(formValue);
+
+  if (store.isAuthenticated) {
+    router.push({ name: 'admin' });
+  } else {
+    console.error("Erreur de connexion :", store.error);
+  }
+});
+
+
+const { value: nameValue, errorMessage: nameError} = useField('username');
+const { value: passwordValue, errorMessage: passwordError} = useField('password');
+
+</script>
+
 <template>
   <div>
     <header class="login-header">
@@ -17,16 +57,22 @@
           </svg>
         </div>
         <h2>Connexion</h2>
-        <form>
+        <form @submit.prevent="submit">
           <div class="login-field">
             <label for="email">Email</label>
-            <input type="email" id="email" placeholder="exemple@mail.com" required>
+            <input v-model="nameValue" type="text" id="username" placeholder="exemple@mail.com" required>
+            <p v-if="nameError" class="form-error">{{ nameError }}</p>
           </div>
 
           <div class="login-field">
             <label for="password">Mot de passe</label>
-            <input type="password" id="password" placeholder="••••••••" required>
+            <input v-model="passwordValue" type="password" id="password" placeholder="••••••••" required>
+            <p v-if="passwordError" class="form-error">{{ passwordError }}</p>
           </div>
+
+          <p v-if="store.error" class="form-error">
+            Identifiants incorrects
+          </p>
 
           <button type="submit" class="login-btn">Se connecter</button>
         </form>
@@ -35,8 +81,7 @@
   </div>
 </template>
 
-<script setup>
-</script>
+
 
 <style scoped>
 .login-header {

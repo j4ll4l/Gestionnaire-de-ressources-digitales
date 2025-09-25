@@ -25,8 +25,8 @@ final class SectionController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data || !isset($data['nom'], $data['categorie_id'])) {
-            return $this->json(['error' => 'Champs nom, description et categorie_id requis'], 400);
-        }
+    return $this->json(['error' => 'Champs nom et categorie_id requis'], 400);
+}
 
         // Récupérer la catégorie correspondante
         $categorie = $em->getRepository(Categorie::class)->find($data['categorie_id']);
