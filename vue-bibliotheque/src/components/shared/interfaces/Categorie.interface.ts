@@ -9,6 +9,7 @@ export interface Ressource {
   url: string;
   description: string;
   tags: Tag[];
+  section_id: number;
 }
 
 export interface Section {

@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 import { useUser } from '@/components/shared/stores/userStore'
 import { useRouter } from 'vue-router'
+import type { Categorie, Ressource } from '@/components/shared/interfaces/Categorie.interface'
 import {
   getAdminCategories,
   addCategorie,
   addSection,
+  addRessource,
+  deleteRessource,
+  editRessource,
 } from '@/components/shared/services/admin.service'
-import axios from 'axios'
-import type { Categorie, Ressource } from '@/components/shared/interfaces/Categorie.interface'
 
 const store = useUser()
 const router = useRouter()
@@ -19,97 +21,210 @@ function handleLogout() {
 }
 
 const categories = ref<Categorie[]>([])
-const selectedCategorie = ref<number>()
 const loading = ref(true)
 const error = ref<string | null>(null)
+const filtreCategorie = ref<number | null>(null)
 
-const selectedSectionCategorie = ref<number | null>(null)
-const newSectionNom = ref('')
-
-// nouveaux champs
-const newCategorieNom = ref('')
-const newCategorieDescription = ref('')
-
-// charger les catégories
-onMounted(async () => {
-  categories.value = await getAdminCategories()
+const ressourceForm = reactive({
+  nom: '',
+  url: '',
+  description: '',
+  tags: '',
+  categorieId: 0,
+  sectionId: 0,
 })
 
-// ajouter une catégorie
-const ajouterNouvelleCategorie = async () => {
-  if (!newCategorieNom.value.trim()) return
-
-  const nouvelleCategorie = await addCategorie({
-    nom: newCategorieNom.value,
-    description: newCategorieDescription.value,
-  })
-
-  categories.value.push(nouvelleCategorie) // on met à jour la liste
-  selectedCategorie.value = nouvelleCategorie.id // on sélectionne la nouvelle
-  newCategorieNom.value = ''
-  newCategorieDescription.value = ''
+// Toast
+const showToast = ref(false)
+const toastMessage = ref('')
+function afficherToast(message: string) {
+  toastMessage.value = message
+  showToast.value = true
+  setTimeout(() => (showToast.value = false), 3000)
 }
 
-// Pour le formulaire
+// Catégorie / Section
+const newCategorieNom = ref('')
+const newCategorieDescription = ref('')
+const newSectionNom = ref('')
+
+// Ressource en cours d’édition
 const editingRessource = ref<Ressource | null>(null)
 
-onMounted(async () => {
-  await loadCategories()
-})
-
+onMounted(loadCategories)
 async function loadCategories() {
   loading.value = true
   try {
     categories.value = await getAdminCategories()
   } catch (e: any) {
-    error.value = e.message || 'Erreur lors du chargement des ressources'
+    if (e.response && e.response.status === 401) {
+      afficherToast('Session expirée, veuillez vous reconnecter.')
+      store.logout()
+      router.push({ name: 'login' })
+    } else {
+      error.value = e.message || 'Erreur lors du chargement des ressources'
+    }
   } finally {
     loading.value = false
   }
 }
 
+// Reset form
+function resetFormRessource() {
+  Object.assign(ressourceForm, {
+    nom: '',
+    url: '',
+    description: '',
+    tags: '',
+    categorieId: 0,
+    sectionId: 0,
+  })
+  editingRessource.value = null
+}
+
+// Sections filtrées
+const sectionsFiltrees = computed(() => {
+  const cat = categories.value.find((c) => c.id === ressourceForm.categorieId)
+  return cat?.sections || []
+})
+
+// Ajouter catégorie
+const ajouterNouvelleCategorie = async () => {
+  if (!newCategorieNom.value.trim()) return
+  const nouvelleCategorie = await addCategorie({
+    nom: newCategorieNom.value,
+    description: newCategorieDescription.value,
+  })
+  categories.value.push(nouvelleCategorie)
+  ressourceForm.categorieId = nouvelleCategorie.id
+  newCategorieNom.value = ''
+  newCategorieDescription.value = ''
+}
+
+// Ajouter section
+const ajouterNouvelleSection = async () => {
+  if (!newSectionNom.value.trim() || !ressourceForm.categorieId) return
+  const nouvelleSection = await addSection({
+    nom: newSectionNom.value,
+    categorie_id: ressourceForm.categorieId,
+  })
+  const categorie = categories.value.find((c) => c.id === ressourceForm.categorieId)
+  if (categorie) {
+    if (!categorie.sections) categorie.sections = []
+    categorie.sections.push(nouvelleSection)
+  }
+  newSectionNom.value = ''
+}
+
+// Toutes les ressources
 const allRessources = computed(() =>
-  categories.value.flatMap((categorie) =>
-    (categorie.sections ?? []).flatMap((section) =>
-      (section.ressources ?? []).map((ressource) => ({
-        ...ressource,
-        categorieNom: categorie.nom,
-        sectionNom: section.nom,
+  categories.value.flatMap((c) =>
+    (c.sections ?? []).flatMap((s) =>
+      (s.ressources ?? []).map((r) => ({
+        ...r,
+        categorieNom: c.nom,
+        sectionNom: s.nom,
       })),
     ),
   ),
 )
 
-const selectedSection = ref<number | null>(null) // section sélectionnée
-// nouvelle section
-
-// sections filtrées selon la catégorie sélectionnée
-const sectionsFiltrees = computed(() => {
-  if (!selectedCategorie.value) return []
-  const categorie = categories.value.find((c) => c.id === selectedCategorie.value)
-  return categorie?.sections || []
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = 7
+const ressourcesFiltrees = computed(() =>
+  filtreCategorie.value
+    ? allRessources.value.filter((r) => {
+        const cat = categories.value.find((c) => c.id === filtreCategorie.value)
+        return r.categorieNom === cat?.nom
+      })
+    : allRessources.value,
+)
+const totalPages = computed(() => Math.ceil(ressourcesFiltrees.value.length / itemsPerPage))
+const ressourcesPaginees = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  return ressourcesFiltrees.value.slice(start, start + itemsPerPage)
 })
 
-// ajouter une nouvelle section
-const ajouterNouvelleSection = async () => {
-  if (!newSectionNom.value.trim() || !selectedCategorie.value) return
+// Sauvegarde / ajout fusionnés
+async function sauvegarderOuAjouter() {
+  if (
+    !ressourceForm.nom ||
+    !ressourceForm.url ||
+    !ressourceForm.description ||
+    !ressourceForm.sectionId
+  ) {
+    alert('Veuillez remplir tous les champs')
+    return
+  }
 
   try {
-    const nouvelleSection = await addSection({
-      nom: newSectionNom.value,
-      categorie_id: selectedCategorie.value,
-    })
-
-    // Mise à jour de la catégorie dans le state
-    const categorie = categories.value.find((c) => c.id === selectedCategorie.value)
-    if (categorie) {
-      if (!categorie.sections) categorie.sections = []
-      categorie.sections.push(nouvelleSection)
+    if (editingRessource.value) {
+      await editRessource(editingRessource.value.id, {
+        ...ressourceForm,
+        section_id: ressourceForm.sectionId,
+        tags: ressourceForm.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+      })
+      afficherToast('✏️ Ressource modifiée avec succès')
+    } else {
+      await addRessource({
+        ...ressourceForm,
+        section_id: ressourceForm.sectionId,
+        tags: ressourceForm.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+      })
+      afficherToast('✅ Ressource ajoutée avec succès')
     }
 
-    newSectionNom.value = ''
-  } catch (err) {
-    console.error("Erreur lors de l'ajout de la section", err)
+    resetFormRessource()
+    await loadCategories()
+  } catch (error: any) {
+    afficherToast(error.response?.data?.error || '❌ Erreur')
+  }
+}
+
+// Edition ressource
+function commencerEdition(ressource: Ressource) {
+  editingRessource.value = ressource
+  ressourceForm.nom = ressource.nom
+  ressourceForm.url = ressource.url
+  ressourceForm.description = ressource.description
+  ressourceForm.tags = ressource.tags.map((t) => t.nom).join(', ')
+  const section = categories.value
+    .flatMap((c) => c.sections?.map((s) => ({ ...s, categorieId: c.id })) || [])
+    .find((s) => s.id === ressource.section_id)
+  if (section) {
+    ressourceForm.categorieId = section.categorieId
+    ressourceForm.sectionId = section.id
+  } else {
+    ressourceForm.categorieId = 0
+    ressourceForm.sectionId = 0
+  }
+}
+
+// Suppression
+const showConfirm = ref(false)
+const ressourceASupprimer = ref<number | null>(null)
+function demanderSuppression(id: number) {
+  ressourceASupprimer.value = id
+  showConfirm.value = true
+}
+async function confirmerSuppression() {
+  if (!ressourceASupprimer.value) return
+  try {
+    await deleteRessource(ressourceASupprimer.value)
+    afficherToast('🗑️ Ressource supprimée avec succès')
+    await loadCategories()
+  } catch (error: any) {
+    afficherToast(error.response?.data?.error || '❌ Erreur lors de la suppression')
+  } finally {
+    showConfirm.value = false
+    ressourceASupprimer.value = null
   }
 }
 </script>
@@ -118,9 +233,9 @@ const ajouterNouvelleSection = async () => {
   <div>
     <!-- HEADER -->
     <header class="admin header">
-      <div class="admin-container">
+      <div class="container">
         <h1>⚙️ Administration — Ressources</h1>
-        <div class="admin-backoffice">📚 <RouterLink to="/">Back-office</RouterLink></div>
+        <div class="admin-backoffice">📚 Back-office</div>
         <button class="btn" @click="handleLogout">Logout</button>
       </div>
     </header>
@@ -128,6 +243,9 @@ const ajouterNouvelleSection = async () => {
     <!-- MAIN CONTENT -->
     <main class="admin-main">
       <h2>Gestion des ressources</h2>
+      <div v-if="showToast" class="toast">
+        {{ toastMessage }}
+      </div>
 
       <div class="admin-grid">
         <!-- FORMULAIRE -->
@@ -135,17 +253,17 @@ const ajouterNouvelleSection = async () => {
           <h3>Ajouter / Modifier une ressource</h3>
 
           <label>Nom de la ressource</label>
-          <input type="text" placeholder="Ex. My Brand New Logo" />
+          <input v-model="ressourceForm.nom" type="text" placeholder="Ex. My Brand New Logo" />
 
           <label>URL</label>
-          <input type="url" placeholder="https://exemple.com/ressource" />
+          <input v-model="ressourceForm.url" type="url" placeholder="https://exemple.com/ressource" />
 
           <section class="admin-form">
             <h3>Ajouter / Modifier une catégorie</h3>
 
             <label>Catégorie</label>
-            <select v-model="selectedCategorie">
-              <option :value="null">Sélectionner une catégorie</option>
+            <select v-model="ressourceForm.categorieId">
+              <option :value="0">Sélectionner une catégorie</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.nom }}</option>
             </select>
 
@@ -158,8 +276,8 @@ const ajouterNouvelleSection = async () => {
             </div>
 
             <label>Section</label>
-            <select v-model="selectedSection">
-              <option :value="null">Sélectionner une section</option>
+            <select v-model="ressourceForm.sectionId">
+              <option :value="0">Sélectionner une section</option>
               <option v-for="section in sectionsFiltrees" :key="section.id" :value="section.id">
                 {{ section.nom }}
               </option>
@@ -174,46 +292,91 @@ const ajouterNouvelleSection = async () => {
           </section>
 
           <label>Tags</label>
-          <input type="text" placeholder="Ajouter des tags" />
+          <input v-model="ressourceForm.tags" type="text" placeholder="Ajouter des tags" />
 
           <label>Description</label>
-          <textarea placeholder="Description de la ressource..."></textarea>
+          <textarea
+            v-model="ressourceForm.description"
+            placeholder="Description de la ressource..."
+          ></textarea>
 
           <div class="admin-buttons">
-            <button class="save">Enregistrer</button>
+            <button class="save" @click="sauvegarderOuAjouter">
+              {{ editingRessource ? 'Modifier' : 'Enregistrer' }}
+            </button>
           </div>
         </section>
 
         <!-- TABLEAU DES RESSOURCES -->
         <section class="admin-resources">
+          <div class="admin-filters">
+            <button
+              :class="{ active: filtreCategorie === null }"
+              @click="filtreCategorie = null"
+              class="add-btn"
+            >
+              Toutes les catégories
+            </button>
+
+            <button
+              v-for="cat in categories"
+              :key="cat.id"
+              :class="{ active: filtreCategorie === cat.id }"
+              @click="filtreCategorie = cat.id"
+              class="add-btn"
+            >
+              {{ cat.nom }}
+            </button>
+          </div>
           <table class="admin-table">
             <thead>
               <tr>
                 <th>Nom</th>
                 <th>Catégorie</th>
+                <th>Section</th>
                 <th>URL</th>
                 <th>Tags</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="ressource in allRessources" :key="ressource.id">
+              <tr v-for="ressource in ressourcesPaginees" :key="ressource.id">
                 <td>{{ ressource.nom }}</td>
                 <td>{{ ressource.categorieNom }}</td>
+                <td>{{ ressource.sectionNom }}</td>
                 <td>{{ ressource.url }}</td>
                 <td>
                   <span v-for="tag in ressource.tags" :key="tag.id">#{{ tag.nom }}</span>
                 </td>
                 <td>
                   <div class="buttons-edit">
-                    <button class="edit">✏️</button>
-                    <button class="delete">🗑️</button>
+                    <button class="edit" @click="commencerEdition(ressource)">✏️</button>
+                    <button class="delete" @click="demanderSuppression(ressource.id)">🗑️</button>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
+          <div class="pagination">
+            <button :disabled="currentPage === 1" @click="currentPage--">◀ Précédent</button>
+
+            <span>Page {{ currentPage }} / {{ totalPages }}</span>
+
+            <button :disabled="currentPage === totalPages" @click="currentPage++">
+              Suivant ▶
+            </button>
+          </div>
         </section>
+      </div>
+      <!-- Popup de confirmation -->
+      <div v-if="showConfirm" class="popup-overlay">
+        <div class="popup">
+          <p>⚠️ Voulez-vous vraiment supprimer cette ressource ?</p>
+          <div class="popup-buttons">
+            <button class="confirm" @click="confirmerSuppression">Oui</button>
+            <button class="cancel" @click="showConfirm = false">Annuler</button>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -236,335 +399,5 @@ const ajouterNouvelleSection = async () => {
   </footer>
 </template>
 
-<script setup></script>
 
-<style scoped>
-/* .admin-container {
-  margin: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
-.admin-backoffice {
-  font-weight: bold;
-}
-
-.admin-main {
-  max-width: 1200px;
-  margin: 30px auto;
-}
-
-.admin-grid {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 20px;
-}
-
-.admin-form {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.admin-form textarea {
-  resize: none;
-  min-height: 80px;
-}
-
-.admin-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.admin-buttons .save {
-  background-color: #ff4500;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-}
-
-.admin-resources {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 15px;
-}
-
-.admin-table th, .admin-table td {
-  text-align: left;
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-}
-
-.admin-table td span {
-  background-color: #333;
-  color: white;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  margin-right: 5px;
-}
-
-.buttons-edit {
-  display: flex;
-}
-.edit {
-  background-color: #f1f1f1;
-  border: none;
-  padding: 6px 10px;
-}
-.delete {
-  background-color: #ff4500;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-} */
-.admin-container {
-  /* width: 90%;
-  max-width: 1200px; */
-  margin: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.admin-backoffice {
-  font-weight: bold;
-}
-
-/* ----- MAIN ----- */
-.admin-main {
-  /* width: 90%; */
-  max-width: 1200px;
-  margin: 30px auto;
-}
-
-.admin-main h2 {
-  margin-bottom: 20px;
-}
-
-/* ----- GRID ----- */
-.admin-grid {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 20px;
-}
-
-/* ----- FORM ----- */
-.admin-form {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.admin-form h3 {
-  margin-bottom: 10px;
-}
-
-.admin-form input,
-.admin-form textarea,
-.admin-form select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 0.95rem;
-  width: 100%;
-}
-
-.admin-form textarea {
-  min-height: 80px;
-}
-
-.admin-categories,
-.admin-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.admin-categories span,
-.admin-tags span {
-  background-color: #333;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-}
-.admin-form textarea {
-  resize: none;
-}
-
-.admin-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.admin-buttons .save {
-  background-color: #ff4500;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.admin-buttons .reset {
-  background-color: white;
-  border: 1px solid #ccc;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* ----- TABLE ----- */
-.admin-resources {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
-}
-
-/* .admin-searchbar {
-  margin-bottom: 15px;
-}
-
-.admin-searchbar input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 25px;
-  border: 1px solid #ccc;
-} */
-
-/* .admin-filters {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.admin-filters button {
-  border: 1px solid #ccc;
-  background-color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-}
-
-.admin-filters button.active {
-  background-color: #eee;
-} */
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 15px;
-}
-
-.admin-table th,
-.admin-table td {
-  text-align: left;
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-  vertical-align: top;
-}
-
-.admin-table td span {
-  background-color: #333;
-  color: white;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  margin-right: 5px;
-}
-.buttons-edit {
-  display: flex;
-  flex-wrap: nowrap;
-}
-/* -------- Nouvelle catégorie -------- */
-.admin-category-new {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.admin-category-new input {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 0.95rem;
-}
-
-.admin-category-new input:focus {
-  outline: none;
-  border-color: #ff6b00;
-}
-
-.admin-category-new .add-btn {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 10px 15px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: #333;
-  transition: background 0.2s;
-}
-
-.admin-category-new .add-btn:hover {
-  background: #f5f5f5;
-}
-
-/* Actions */
-.admin-table .edit {
-  background-color: #f1f1f1;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-right: 5px;
-  min-height: 50px;
-  min-width: 50px;
-}
-
-.admin-table .delete {
-  background-color: #ff4500;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  min-height: 50px;
-  min-width: 50px;
-}
-
-.admin-hint {
-  font-size: 0.85rem;
-  color: #777;
-  border: 1px dashed #ddd;
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
-}
-</style>

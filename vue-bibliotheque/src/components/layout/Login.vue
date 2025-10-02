@@ -60,7 +60,7 @@ const { value: passwordValue, errorMessage: passwordError} = useField('password'
         <form @submit.prevent="submit">
           <div class="login-field">
             <label for="email">Email</label>
-            <input v-model="nameValue" type="text" id="username" placeholder="exemple@mail.com" required>
+            <input v-model="nameValue" type="text" id="username" placeholder="username" required>
             <p v-if="nameError" class="form-error">{{ nameError }}</p>
           </div>
 

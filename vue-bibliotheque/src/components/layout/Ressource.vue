@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import CardRessource from '@/components/UI/CardRessource.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed} from 'vue'
 import { useRoute } from 'vue-router'
+import type { Section, Ressource, Tag } from '@/components/shared/interfaces/Categorie.interface'
+import logo from '@/assets/img/favico/favicon-32x32.png'
 
 const currentYear = ref(new Date().getFullYear())
 const route = useRoute()
 
-const sections = ref<any[]>([]) // stockage des sections + ressources
+const sections = ref<Section[]>([]) // stockage des sections + ressources
+const searchTag = ref('')
 
 onMounted(async () => {
   try {
@@ -22,30 +25,48 @@ onMounted(async () => {
     console.error('Erreur lors de la récupération des ressources :', error)
   }
 })
+const filteredSections = computed(() => {
+  const tag = searchTag.value.trim().toLowerCase()
+  if (!tag) return sections.value
+  return sections.value
+    .map(section => ({
+      id: section.id,
+      nom: section.nom,
+      ressources: section.ressources.filter((r: Ressource) =>
+        r.tags.some((t: Tag) => t.nom.toLowerCase().includes(tag))
+      )
+    }))
+    .filter(section => section.ressources.length)
+})
 </script>
 
 <template>
   <!-- HEADER -->
   <header class="header">
-    <div class="container">
-      <!-- <RouterLink to="https://www.e-potion.fr/">
-          <img class="tampon" src="img/logo_epotion.png" alt="Logo e-Potion">
-        </RouterLink> -->
+    <div class="container admin-container">
+      <RouterLink to="https://www.e-potion.fr/">
+          <img class="tampon" :src="logo" alt="Logo e-Potion">
+        </RouterLink>
 
       <h1>Gestionnaire de ressources digitales</h1>
 
       <nav>
         <ul>
-          <li><RouterLink to="/admin" class="admin-buttons button ">Admin</RouterLink></li>
+          <li><RouterLink to="/admin" class="btn">Admin</RouterLink></li>
         </ul>
       </nav>
     </div>
   </header>
   <main>
-    <section v-for="section in sections" :key="section.section_id">
-      <h2>{{ section.section_nom }}</h2>
+    <!-- Barre de recherche -->
+        <div class="media-search">
+            <input type="text" placeholder="Rechercher par tag" v-model="searchTag">
+            <small>Astuce : entrez un mot-clé pour lancer la recherche.</small>
+        </div>
+    <section v-for="section in filteredSections" :key="section.id" class="cards ressources">
+      <h2>{{ section.nom }}</h2>
 
-      <div class="media-cards">
+      <div class="cards">
         <CardRessource
           v-for="ressource in section.ressources"
           :key="ressource.id"

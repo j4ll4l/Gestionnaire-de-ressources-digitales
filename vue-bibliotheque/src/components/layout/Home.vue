@@ -1,6 +1,7 @@
 <script setup>
 import CardCategory from "@/components/UI/CardCategory.vue"
 import { ref, onMounted } from "vue"
+import logo from '@/assets/img/favico/favicon-32x32.png'
 
 const currentYear = ref(new Date().getFullYear());
 
@@ -26,9 +27,9 @@ onMounted(async () => {
     <!-- HEADER -->
     <header class="header">
       <div class="container">
-        <!-- <RouterLink to="https://www.e-potion.fr/">
-          <img class="tampon" src="img/logo_epotion.png" alt="Logo e-Potion">
-        </RouterLink> -->
+        <RouterLink to="https://www.e-potion.fr/">
+          <img class="tampon" :src="logo" alt="Logo e-Potion">
+        </RouterLink>
 
         <h1>Gestionnaire de ressources digitales</h1>
 
@@ -56,8 +57,9 @@ onMounted(async () => {
           />
         </div>
       </section>
+    </main>
 
-      <!-- FOOTER -->
+    <!-- FOOTER -->
       <footer class="footer">
         <div class="content has-text-centered">
           <p>
@@ -72,70 +74,14 @@ onMounted(async () => {
           <p class="mention">made with <a href="https://bulma.io/">Bulma</a></p>
         </div>
       </footer>
-    </main>
   </div>
 </template>
 
 
 
 <style scoped>
-/* header {
-  background-color: #999;
-  padding: 15px 0;
-  color: white;
-} */
 
-header .container {
-  width: 90%;
-  max-width: 1200px;
-  margin: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
-.btn {
-  background-color: #ff6b00;
-  border-radius: 5px;
-  padding: 0.5rem 1.5rem;
-  color: white;
-}
-
-nav ul {
-  list-style: none;
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-nav a {
-  text-decoration: none;
-  color: white;
-  padding: 5px 10px;
-}
-
-main {
-  width: 90%;
-  max-width: 1200px;
-  margin: 40px auto;
-}
-
-.categories h2 {
-  font-size: 1.8rem;
-  margin-bottom: 5px;
-}
-
-.categories .subtitle {
-  color: #777;
-  margin-bottom: 30px;
-}
-
-.cards {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-}
 
 
 </style>

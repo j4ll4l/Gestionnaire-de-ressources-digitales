@@ -25,22 +25,18 @@ defineProps({
 
 <style scoped>
 
-.media-cards {
-  display: flex;
-  /* flex-wrap: wrap; */
-  gap: 10px;
-  justify-content: space-between;
-}
+
 
 .media-card {
   background-color: white;
   border-radius: 12px;
   padding: 20px;
-  width: 300px;
+  max-width: 300px;
   box-shadow: 0 3px 6px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-bottom: 2rem;
 }
 
 .media-card h4 {

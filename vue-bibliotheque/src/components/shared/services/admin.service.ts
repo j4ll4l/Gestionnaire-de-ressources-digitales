@@ -1,74 +1,44 @@
-import type { Categorie } from "@/components/shared/interfaces/Categorie.interface";
+import type { Categorie, Ressource } from '@/components/shared/interfaces/Categorie.interface'
+import api from './api'
 
-const BASE_URL = "http://127.0.0.1:8000/api/categories/admin";
-
+//  Récupération des catégories (admin)
 export async function getAdminCategories(): Promise<Categorie[]> {
-  try {
-    const token = localStorage.getItem("token"); // token JWT
-    const response = await fetch(BASE_URL, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Erreur lors de la récupération des catégories");
-    }
-
-    return response.json();
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.get('/categories/admin')
+  return response.data
 }
 
-export async function addCategorie(payload: {
-  nom: string
-  description: string
-}): Promise<Categorie> {
-  try {
-    const token = localStorage.getItem("token")
-    const response = await fetch("http://127.0.0.1:8000/api/categorie/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-  const errorText = await response.text();
-  console.error("Erreur API:", response.status, errorText);
-  throw new Error("Erreur lors de l’ajout de la catégorie");
+//  Ajout de catégorie
+export async function addCategorie(payload: { nom: string; description: string }): Promise<Categorie> {
+  const response = await api.post('/categorie/add', payload)
+  return response.data
 }
 
-    return response.json()
-  } catch (error) {
-    throw error
-  }
-}
-
+//  Ajout de section
 export async function addSection(payload: { nom: string; categorie_id: number }) {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch("http://127.0.0.1:8000/api/categorie/add_section", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: JSON.stringify(payload),
-    });
+  const response = await api.post('/categorie/add_section', payload)
+  return response.data
+}
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Erreur API:", response.status, errorText);
-      throw new Error("Erreur lors de l’ajout de la section");
-    }
+//  Ajout ressource
+export async function addRessource(data: {
+  nom: string
+  url: string
+  description: string
+  section_id: number
+  tags?: string[]
+}): Promise<Ressource> {
+  const response = await api.post('/ressource', data)
+  return response.data
+}
 
-    return response.json();
-  } catch (error) {
-    throw error;
-  }
+//  Modification ressource
+export async function editRessource(id: number, data: any): Promise<Ressource> {
+  const response = await api.put(`/ressource/${id}`, data)
+  return response.data
+}
+
+//  Suppression ressource
+export async function deleteRessource(id: number) {
+  const response = await api.delete(`/ressource/${id}`)
+  return response.data
 }
