@@ -10,6 +10,8 @@ export interface Ressource {
   description: string;
   tags: Tag[];
   section_id: number;
+  categorieNom?: string
+  sectionNom?: string
 }
 
 export interface Section {

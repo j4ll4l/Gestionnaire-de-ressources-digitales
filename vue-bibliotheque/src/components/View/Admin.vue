@@ -2,6 +2,8 @@
 import { ref, onMounted, computed, reactive } from 'vue'
 import { useUser } from '@/components/shared/stores/userStore'
 import { useRouter } from 'vue-router'
+import Toast from '../UI/Toast.vue'
+import Popup from '../UI/Popup.vue'
 import type { Categorie, Ressource } from '@/components/shared/interfaces/Categorie.interface'
 import {
   getAdminCategories,
@@ -40,7 +42,6 @@ const toastMessage = ref('')
 function afficherToast(message: string) {
   toastMessage.value = message
   showToast.value = true
-  setTimeout(() => (showToast.value = false), 3000)
 }
 
 // Catégorie / Section
@@ -204,6 +205,7 @@ function commencerEdition(ressource: Ressource) {
   } else {
     ressourceForm.categorieId = 0
     ressourceForm.sectionId = 0
+    
   }
 }
 
@@ -241,11 +243,13 @@ async function confirmerSuppression() {
     </header>
 
     <!-- MAIN CONTENT -->
-    <main class="admin-main">
+    <main class="container">
       <h2>Gestion des ressources</h2>
-      <div v-if="showToast" class="toast">
-        {{ toastMessage }}
-      </div>
+      <Toast
+      :show="showToast"
+      :message="toastMessage"
+      @close="showToast = false"
+    />
 
       <div class="admin-grid">
         <!-- FORMULAIRE -->
@@ -263,7 +267,7 @@ async function confirmerSuppression() {
 
             <label>Catégorie</label>
             <select v-model="ressourceForm.categorieId">
-              <option :value="0">Sélectionner une catégorie</option>
+              <option v-if="editingRessource" :value="ressourceForm.categorieId">{{ editingRessource.categorieNom || 'Sélectionner une Catégorie' }}</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.nom }}</option>
             </select>
 
@@ -277,7 +281,7 @@ async function confirmerSuppression() {
 
             <label>Section</label>
             <select v-model="ressourceForm.sectionId">
-              <option :value="0">Sélectionner une section</option>
+              <option v-if="editingRessource" :value="ressourceForm.sectionId"> {{ editingRessource.sectionNom || 'Sélectionner une section' }}</option>
               <option v-for="section in sectionsFiltrees" :key="section.id" :value="section.id">
                 {{ section.nom }}
               </option>
@@ -300,16 +304,19 @@ async function confirmerSuppression() {
             placeholder="Description de la ressource..."
           ></textarea>
 
-          <div class="admin-buttons">
+          <div class="buttons">
             <button class="save" @click="sauvegarderOuAjouter">
               {{ editingRessource ? 'Modifier' : 'Enregistrer' }}
+            </button>
+            <button class="cancel" @click="resetFormRessource">
+              Annuler
             </button>
           </div>
         </section>
 
         <!-- TABLEAU DES RESSOURCES -->
         <section class="admin-resources">
-          <div class="admin-filters">
+          <div class="btn-filters">
             <button
               :class="{ active: filtreCategorie === null }"
               @click="filtreCategorie = null"
@@ -328,7 +335,7 @@ async function confirmerSuppression() {
               {{ cat.nom }}
             </button>
           </div>
-          <table class="admin-table">
+          <table class="table">
             <thead>
               <tr>
                 <th>Nom</th>
@@ -369,35 +376,82 @@ async function confirmerSuppression() {
         </section>
       </div>
       <!-- Popup de confirmation -->
-      <div v-if="showConfirm" class="popup-overlay">
-        <div class="popup">
-          <p>⚠️ Voulez-vous vraiment supprimer cette ressource ?</p>
-          <div class="popup-buttons">
-            <button class="confirm" @click="confirmerSuppression">Oui</button>
-            <button class="cancel" @click="showConfirm = false">Annuler</button>
-          </div>
-        </div>
-      </div>
+      <Popup
+      :show="showConfirm"
+      message="⚠️ Voulez-vous vraiment supprimer cette ressource ?"
+      @confirm="confirmerSuppression"
+      @cancel="showConfirm = false"
+    />
     </main>
   </div>
-  <!--FOOTER-->
-  <footer class="footer">
-    <div class="content has-text-centered">
-      <p>
-        <a href="http://www.e-potion.fr/"><strong>e-Potion</strong></a> by
-        <a href="https://www.linkedin.com/in/christianbourgeoisdev" target="_blank"
-          >Christian Bourgeois</a
-        >
-        <br />
-        Tous droits réservés -
-        <strong>
-          <!-- <script>document.write(new Date().getFullYear())</script> -->
-        </strong>
-      </p>
-      <p class="mention">made with <a href="https://bulma.io/">Bulma</a></p>
-    </div>
-  </footer>
+
 </template>
 
+<style scoped>
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--admin-grid-gap);
+  width: 100%;
+  align-items: flex-start;
+}
+/* --- FORMULAIRES --- */
+.admin-form,
+.admin-resources,
+.popup {
+  background: var(--popup-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: var(--popup-shadow);
+}
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-form h3 {
+  margin-bottom: 10px;
+}
+.admin-form input,
+.admin-form select,
+.admin-form textarea,
+.admin-category-new input {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.95rem;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+}
+.admin-form textarea {
+  min-height: 80px;
+  resize: none;
+}
+.admin-category-new {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.admin-category-new input:focus {
+  outline: none;
+  border-color: var(--input-focus);
+}
+.admin-category-new .add-btn {
+  background: var(--btn-secondary-bg);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--btn-secondary-text);
+  transition: background 0.2s;
+}
+.admin-category-new .add-btn:hover {
+  background: #f5f5f5;
+}
+
+
+</style>
 
 

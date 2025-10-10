@@ -1,5 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
-import Home from '@/components/layout/Home.vue'
+import Home from '@/components/View/Home.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -10,23 +10,23 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/categorie/:id',
     name: 'categorie',
-    component: () => import('@/components/layout/Ressource.vue'),
+    component: () => import('@/components/View/Ressource.vue'),
   },
   {
     path: '/admin',
     name: 'admin',
-    component: () => import('@/components/layout/Admin.vue'),
+    component: () => import('@/components/View/Admin.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/components/layout/Login.vue'),
+    component: () => import('@/components/View/Login.vue'),
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/components/layout/NotFound.vue'),
+    component: () => import('@/components/View/NotFound.vue'),
   },
 ]
 export default routes

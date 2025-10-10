@@ -11,7 +11,7 @@ id: String,
   <div class="card btn_hover">
     <h3>{{ nom }}</h3>
     <p>{{ description }}</p>
-    <RouterLink :to="`/categorie/${id}`">Voir la collection →</RouterLink>
+    <RouterLink :to="`/categorie/${id}`">Voir la collection </RouterLink>
   </div>
 </template>
 
@@ -23,10 +23,12 @@ id: String,
   border-radius: 12px;
   padding: 6rem 5rem;
   width: 300px;
+  height: 400px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-right: 20px;
 }
 
 .card.btn_hover:hover {

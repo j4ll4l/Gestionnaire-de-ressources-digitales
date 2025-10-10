@@ -31,12 +31,14 @@ defineProps({
   background-color: white;
   border-radius: 12px;
   padding: 20px;
-  max-width: 300px;
+  width: 350px;
+  height: 300px;
+  
   box-shadow: 0 3px 6px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 2rem;
+  gap: 40px;
+  margin-bottom: 3rem;
 }
 
 .media-card h4 {

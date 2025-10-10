@@ -1,7 +1,8 @@
 <script setup>
 import CardCategory from "@/components/UI/CardCategory.vue"
 import { ref, onMounted } from "vue"
-import logo from '@/assets/img/favico/favicon-32x32.png'
+import logo from '@/assets/img/logo_epotion.png'
+import Footer from "@/components/layout/Footer.vue";
 
 const currentYear = ref(new Date().getFullYear());
 
@@ -27,11 +28,13 @@ onMounted(async () => {
     <!-- HEADER -->
     <header class="header">
       <div class="container">
-        <RouterLink to="https://www.e-potion.fr/">
+        <a href="https://www.e-potion.fr/">
           <img class="tampon" :src="logo" alt="Logo e-Potion">
-        </RouterLink>
+        </a>
 
-        <h1>Gestionnaire de ressources digitales</h1>
+        
+          <h1>Gestionnaire de ressources digitales</h1>
+        
 
         <nav>
           <ul>
@@ -45,7 +48,7 @@ onMounted(async () => {
     <main>
       <section class="categories">
         <h2>Explorez les catégories principales</h2>
-        <p class="subtitle">Accédez aux ressources multimédia, design et développement web.</p>
+
 
         <div class="cards">
           <CardCategory
@@ -59,21 +62,8 @@ onMounted(async () => {
       </section>
     </main>
 
-    <!-- FOOTER -->
-      <footer class="footer">
-        <div class="content has-text-centered">
-          <p>
-            <a href="http://www.e-potion.fr/"><strong>e-Potion</strong></a>
-            by <a href="https://www.linkedin.com/in/christianbourgeoisdev" target="_blank">
-              Christian Bourgeois
-            </a>
-            <br />
-            Tous droits réservés -
-            <strong>{{ currentYear }}</strong>
-          </p>
-          <p class="mention">made with <a href="https://bulma.io/">Bulma</a></p>
-        </div>
-      </footer>
+   <Footer />
+      
   </div>
 </template>
 
@@ -81,7 +71,17 @@ onMounted(async () => {
 
 <style scoped>
 
+.categories>p{
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+.categories>h2{
+  margin: 2rem 3rem;
+}
 
+.ressources{
+  flex-direction: column;
+}
 
 
 </style>
