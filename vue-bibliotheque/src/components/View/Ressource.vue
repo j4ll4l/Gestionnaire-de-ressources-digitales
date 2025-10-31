@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import CardRessource from '@/components/UI/CardRessource.vue'
 import { ref, onMounted, computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useRoute } from 'vue-router'
 import type { Section, Ressource, Tag } from '@/components/shared/interfaces/Categorie.interface'
 import logo from '@/assets/img/logo_epotion.png'
@@ -70,7 +71,9 @@ const scrollToSection = (id: number) => {
         <img class="tampon" :src="logo" alt="Logo e-Potion" />
       </a>
 
-      <h1>Gestionnaire de ressources digitales</h1>
+      <RouterLink to="/" class="title-link">
+        <h1>Gestionnaire de ressources digitales</h1>
+      </RouterLink>
 
       <nav>
         <ul>
