@@ -28,10 +28,10 @@ export const useUser = defineStore("user", {
      */
     async login(loginForm: LoginForm) {
       try {
-        const response = await login(loginForm); // { token: "..." }
+        const response = await login(loginForm); 
         this.token = response.token;
 
-        // Stockage du token pour persistance
+        // Stockage du token 
         localStorage.setItem("token", response.token);
 
         this.error = null;
