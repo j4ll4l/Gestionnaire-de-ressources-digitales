@@ -1,0 +1,280 @@
+/* --- RESET & GLOBALS --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background-color: var(--background-body, #fdfdf8);
+  color: var(--text-color, #333);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#app {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* --- VARIABLES --- */
+:root {
+  --footer-background-color: #f5f5f5;
+  --link: #f15d57;
+  --background-tiles: #c39f76;
+  --background-hero: rgb(79, 79, 79);
+  --title-hero: #fff;
+  --subtitle-hero: #212121;
+  --card-background: hsl(32, 39%, 61%);
+  --primary: #ff6b00;
+  --primary-dark: #ff4500;
+  --input-border: #ccc;
+  --input-focus: #ff6b00;
+  --btn-bg: var(--primary);
+  --btn-bg-hover: #e65c00;
+  --btn-text: #fff;
+  --btn-secondary-bg: #fff;
+  --btn-secondary-border: #ccc;
+  --btn-secondary-text: #333;
+  --table-border: #eee;
+  --toast-bg: #333;
+  --toast-text: #fff;
+  --popup-bg: #fff;
+  --popup-shadow: 0 3px 6px rgba(0,0,0,0.08);
+  --card-gap: 20px;
+  --admin-grid-gap: 20px;
+  --background-body: #fdfdf8;
+  --text-color: #333;
+}
+
+/* --- LAYOUT --- */
+.container, main, header .container {
+  width: 100%;
+ 
+  margin-left: auto;
+  margin-right: auto;
+}
+
+main.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 70vh;
+  padding: 2rem 3rem;
+  width: 100%;
+}
+
+main.container > section{
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+
+/* --- HEADER --- */
+.header {
+  background-color: var(--background-hero);
+  color: var(--title-hero);
+  padding: 1rem 3rem;
+  font-size: large;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.container, .cards {
+  width: 90%;
+  margin: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 30px;
+}
+
+
+/* --- TITRES --- */
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* --- BOUTONS --- */
+button, .btn {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+button:hover, .btn:hover {
+  opacity: 0.9;
+  background-color: var(--btn-bg-hover);
+}
+
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.buttons .save,
+.buttons .confirm,
+.table .delete,
+.admin-filters button.active {
+  background: var(--primary-dark);
+  color: var(--btn-text);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.buttons .cancel,
+.table .edit {
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--btn-secondary-border);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--btn-secondary-text);
+}
+
+
+
+/* --- FILTRES --- */
+.btn-filters {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.btn-filters button{
+  background: var(--btn-secondary-bg);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--btn-secondary-text);
+  transition: background 0.2s;
+  
+}
+
+
+.btn-filters button.active ,.btn-filters button:hover{
+  background: var(--primary-dark);
+  color: var(--btn-text);
+}
+
+
+
+/* --- TABLE --- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+.table th,
+.table td {
+  padding: 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--table-border);
+}
+.buttons-edit {
+  display: flex;
+  gap: 5px;
+}
+.table .edit,
+.table .delete {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+/* --- PAGINATION --- */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+.pagination button {
+  padding: 8px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: var(--btn-secondary-bg);
+  cursor: pointer;
+  color: var(--btn-secondary-text);
+}
+.pagination button:disabled {
+  display: none;
+}
+
+
+/* --- UTILITAIRES --- */
+.tampon { height: 50px; float: right; }
+.asterix { width: 35%; padding: 1rem 0; }
+
+/* --- ANIMATION REDUITE --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* --- CARDS ANIMATION  --- */
+@media (hover) {
+  .card-content {
+    transform: translateY(69%);
+    transition: transform 500ms ease;
+  }
+  .card:hover .card-content,
+  .card:focus-within .card-content {
+    transform: translateY(0);
+    transition-delay: 500ms;
+  }
+  .card:focus-within .card-content {
+    transition-duration: 0ms;
+  }
+  .card-content > *:not(.card-title) {
+    opacity: 0;
+    transition: opacity 500ms linear;
+  }
+  .card:hover .card-content > *:not(.card-title),
+  .card:focus-within .card-content > *:not(.card-title) {
+    opacity: 1;
+    transition-delay: 800ms;
+  }
+  .card-title::after {
+    transform: scaleX(0);
+  }
+}

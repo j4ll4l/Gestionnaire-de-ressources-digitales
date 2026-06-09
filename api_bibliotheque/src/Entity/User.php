@@ -59,7 +59,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        // toujours ROLE_ADMIN
+        
         return ['ROLE_ADMIN'];
     }
 

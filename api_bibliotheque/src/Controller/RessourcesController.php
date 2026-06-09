@@ -90,13 +90,24 @@ final class RessourcesController extends AbstractController
             $ressources = [];
 
             foreach ($section->getRessources() as $ressource) {
+                $tagsData = [];
+                foreach ($ressource->getTags() as $tag) {
+                        $tagsData[] = [
+                            'id' => $tag->getId(),
+                            'nom' => $tag->getNom(),
+                        ];
+                    }
                 $ressources[] = [
                     'id' => $ressource->getId(),
                     'nom' => $ressource->getNom(),
                     'url' => $ressource->getUrl(),
                     'description' => $ressource->getDescription(),
+                    'tags' => $tagsData,
 
                 ];
+                
+                
+                    
             }
 
             $data[] = [
